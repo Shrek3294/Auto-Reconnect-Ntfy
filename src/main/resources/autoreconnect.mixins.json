@@ -1,0 +1,12 @@
+{
+    "required": true,
+    "package": "com.example.autoreconnect.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "mixins": [
+        "DisconnectedScreenMixin",
+        "ConnectScreenMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
