@@ -4,7 +4,8 @@
     "compatibilityLevel": "JAVA_21",
     "mixins": [
         "DisconnectedScreenMixin",
-        "ConnectScreenMixin"
+        "ConnectScreenMixin",
+        "TitleScreenMixin"
     ],
     "injectors": {
         "defaultRequire": 1

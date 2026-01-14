@@ -1,8 +1,8 @@
 package com.example.autoreconnect.mixin;
 
 import com.example.autoreconnect.AutoReconnectMod;
+import com.example.autoreconnect.ModConfig;
 import com.example.autoreconnect.NtfyService;
-import com.example.autoreconnect.ReconnectConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.DisconnectedScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -26,6 +26,9 @@ public abstract class DisconnectedScreenMixin extends Screen {
     private long disconnectTime;
 
     @Unique
+    private long reconnectTime;
+
+    @Unique
     private boolean isReconnecting = false;
 
     @Unique
@@ -37,8 +40,14 @@ public abstract class DisconnectedScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        disconnectTime = System.currentTimeMillis();
-        isReconnecting = true;
+        this.isReconnecting = true;
+        ModConfig config = AutoReconnectMod.getConfig();
+        long delayMs = config.delaySeconds * 1000L;
+        if (config.jitterEnabled) {
+            double jitter = (Math.random() * 2.0 - 1.0) * (config.jitterRange * 1000.0);
+            delayMs += (long) jitter;
+        }
+        reconnectTime = System.currentTimeMillis() + delayMs;
 
         // Add a button to cancel reconnection
         cancelButton = net.minecraft.client.gui.widget.ButtonWidget
@@ -54,11 +63,12 @@ public abstract class DisconnectedScreenMixin extends Screen {
         this.addDrawable((context, mouseX, mouseY, delta) -> {
             if (!isReconnecting)
                 return;
-            long elapsed = (System.currentTimeMillis() - disconnectTime) / 1000;
-            long remaining = ReconnectConfig.delaySeconds - elapsed;
+            long remainingMs = reconnectTime - System.currentTimeMillis();
+            double remainingSec = Math.max(0, remainingMs / 1000.0);
 
-            if (remaining > 0) {
-                context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting in " + remaining + "..."),
+            if (remainingMs > 0) {
+                String timeStr = String.format("%.1f", remainingSec);
+                context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting in " + timeStr + "s..."),
                         this.width / 2, this.height - 30, 0xFFFFFF);
             } else {
                 context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting..."), this.width / 2,
@@ -70,7 +80,8 @@ public abstract class DisconnectedScreenMixin extends Screen {
         if (AutoReconnectMod.lastServer != null) {
             String serverName = AutoReconnectMod.lastServer.name;
             NtfyService.sendNotification(
-                    "Disconnected from " + serverName + ". Reconnecting in " + ReconnectConfig.delaySeconds + "s...");
+                    "Disconnected from " + serverName + ". Reconnecting in " + AutoReconnectMod.getConfig().delaySeconds
+                            + "s...");
 
             NtfyService.startStopListener(() -> {
                 // Ensure we run on the main thread
@@ -93,12 +104,19 @@ public abstract class DisconnectedScreenMixin extends Screen {
         if (!isReconnecting)
             return;
 
-        long elapsed = (System.currentTimeMillis() - disconnectTime) / 1000;
-        long remaining = ReconnectConfig.delaySeconds - elapsed;
-
-        if (remaining <= 0) {
+        if (System.currentTimeMillis() >= reconnectTime) {
             reconnect();
         }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) { // ESC
+            if (isReconnecting) {
+                cancelReconnect();
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -120,6 +138,7 @@ public abstract class DisconnectedScreenMixin extends Screen {
     @Unique
     private void reconnect() {
         isReconnecting = false;
+        AutoReconnectMod.wasAutoReconnect = true;
         NtfyService.stopListener();
 
         ServerInfo validServer = com.example.autoreconnect.AutoReconnectMod.lastServer;

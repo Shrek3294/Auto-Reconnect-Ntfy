@@ -26,7 +26,7 @@ public class NtfyService {
     private static boolean listening = false;
 
     public static void sendNotification(String message) {
-        String topic = ReconnectConfig.ntfyTopic;
+        String topic = AutoReconnectMod.getConfig().ntfyTopic;
         if (topic == null || topic.isEmpty()) {
             DebugLog.log("ntfy-skip reason='topic missing'");
             return;
@@ -91,7 +91,7 @@ public class NtfyService {
             return; // Already listening
         listening = true;
 
-        String topic = ReconnectConfig.ntfyTopic;
+        String topic = AutoReconnectMod.getConfig().ntfyTopic;
         if (topic == null || topic.isEmpty()) {
             DebugLog.log("ntfy-listener-skip reason='topic missing'");
             return;
@@ -209,7 +209,7 @@ public class NtfyService {
     }
 
     private static String getBaseUrl() {
-        String base = ReconnectConfig.ntfyBaseUrl;
+        String base = AutoReconnectMod.getConfig().ntfyBaseUrl;
         if (base == null || base.isBlank()) {
             return "https://ntfy.sh";
         }

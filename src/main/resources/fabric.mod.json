@@ -20,6 +20,9 @@
         ],
         "client": [
             "com.example.autoreconnect.AutoReconnectClient"
+        ],
+        "modmenu": [
+            "com.example.autoreconnect.ModMenuIntegration"
         ]
     },
     "mixins": [
@@ -29,9 +32,10 @@
         "fabricloader": ">=0.16.5",
         "minecraft": "~1.21.1",
         "java": ">=21",
-        "fabric-api": "*"
+        "fabric-api": "*",
+        "cloth-config": ">=15.0.140"
     },
     "suggests": {
-        "another-mod": "*"
+        "modmenu": "*"
     }
 }
