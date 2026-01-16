@@ -128,6 +128,10 @@ public class AutoCommandService {
         }, intervalSeconds, intervalSeconds, TimeUnit.SECONDS));
     }
 
+    public static void executeCommands(List<String> commands, int delayMs, long initialDelay) {
+        runCommands(commands, delayMs, initialDelay);
+    }
+
     private static void runCommands(List<String> commands, int delayMs, long initialDelay) {
         if (commands == null || commands.isEmpty())
             return;

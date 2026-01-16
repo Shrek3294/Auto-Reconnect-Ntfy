@@ -42,6 +42,18 @@ public class ModConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     public List<ProfileEntry> profiles = new java.util.ArrayList<>();
 
+    // Hub Detection
+    @ConfigEntry.Gui.Tooltip
+    public boolean hubDetectionEnabled = false;
+    @ConfigEntry.Gui.Tooltip
+    public String hubWorldName = ""; // Name of hub world (e.g., "hub", "lobby")
+    @ConfigEntry.Gui.Tooltip
+    public List<String> hubDetectedCommands = new java.util.ArrayList<>();
+    public int hubCommandDelayMs = 1000;
+    @ConfigEntry.Gui.Tooltip
+    public boolean hubRequireRecentDisconnect = true; // Only run if recently disconnected/reconnected
+    public int hubRecentDisconnectThresholdSeconds = 30; // How recent the disconnect needs to be
+
     @Override
     public void validatePostLoad() throws ConfigData.ValidationException {
         if (delaySeconds < 0)
@@ -50,5 +62,9 @@ public class ModConfig implements ConfigData {
             jitterRange = 0;
         if (ntfyBaseUrl == null || ntfyBaseUrl.isEmpty())
             ntfyBaseUrl = "https://ntfy.sh";
+        if (hubCommandDelayMs < 0)
+            hubCommandDelayMs = 1000;
+        if (hubRecentDisconnectThresholdSeconds < 0)
+            hubRecentDisconnectThresholdSeconds = 30;
     }
 }
