@@ -43,3 +43,15 @@
 - [x] Update README.md with final features.
 - [x] Draft release notes.
 - [x] Final build verification.
+
+## 7) Hub Detection Feature [DONE] - v2.1
+- [x] Detect when player enters hub/lobby world
+- [x] Track disconnect timestamps
+- [x] Add hub detection config options to ModConfig
+- [x] Create HubDetector service class
+- [x] Implement recent disconnect threshold check
+- [x] Add hub commands execution on detection
+- [x] Add debug commands for hub detection setup
+- [x] Add command to auto-set hub world from current location
+- [x] Update README with hub detection feature
+- [x] Build and test feature

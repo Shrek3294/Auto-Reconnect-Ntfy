@@ -149,14 +149,23 @@ public class AutoCommandService {
             String cmd = finalCommand;
             scheduler.schedule(() -> {
                 MinecraftClient client = MinecraftClient.getInstance();
-                if (client.player != null) {
-                    client.execute(() -> {
-                        if (client.player != null) {
-                            client.player.networkHandler.sendCommand(cmd);
-                            DebugLog.log("auto-command-exec command='" + cmd + "'");
+                client.execute(() -> {
+                    try {
+                        if (client.player == null) {
+                            DebugLog.log("auto-command-skip reason='no player' command='" + cmd + "'");
+                            return;
                         }
-                    });
-                }
+                        ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+                        if (networkHandler == null) {
+                            DebugLog.log("auto-command-skip reason='no network handler' command='" + cmd + "'");
+                            return;
+                        }
+                        networkHandler.sendCommand(cmd);
+                        DebugLog.log("auto-command-exec command='" + cmd + "'");
+                    } catch (Throwable t) {
+                        DebugLog.log("auto-command-error command='" + cmd + "' error='" + t.getClass().getSimpleName() + ":" + String.valueOf(t.getMessage()) + "'");
+                    }
+                });
             }, currentDelay, TimeUnit.MILLISECONDS);
 
             currentDelay += delayMs;

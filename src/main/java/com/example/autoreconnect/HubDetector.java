@@ -42,8 +42,9 @@ public class HubDetector {
         DebugLog.log("hub-detector checking world registry='" + worldName + "' expectedHub='" + config.hubWorldName + "'");
 
         // Check if current world matches hub world name (case-insensitive)
-        boolean isHub = worldName.equalsIgnoreCase(config.hubWorldName) ||
-                worldName.contains(config.hubWorldName.toLowerCase());
+        String expected = config.hubWorldName.trim();
+        boolean isHub = worldName.equalsIgnoreCase(expected) ||
+                worldName.toLowerCase().contains(expected.toLowerCase());
 
         if (isHub) {
             // Check if we should require a recent disconnect

@@ -9,6 +9,8 @@ The following commands can be typed into the Minecraft chat.
 | Command | Description | Example |
 | :--- | :--- | :--- |
 | `/autoreconnect topic <name>` | Quickly set your Ntfy notification topic. | `/autoreconnect topic my_secret_alerts` |
+| `/autoreconnect reconnect_phrase <phrase>` | Set the Ntfy phrase that triggers a reconnect attempt. | `/autoreconnect reconnect_phrase RECONNECT` |
+| `/autoreconnect stop_phrase <phrase>` | Set the Ntfy phrase that cancels the reconnect countdown. | `/autoreconnect stop_phrase STOP` |
 | `/autoreconnect debug_disconnect` | **[Dev Tool]** Forces a local disconnect to test the auto-reconnect flow. | `/autoreconnect debug_disconnect` |
 
 ---

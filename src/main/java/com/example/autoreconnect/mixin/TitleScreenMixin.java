@@ -30,6 +30,9 @@ public abstract class TitleScreenMixin extends Screen {
             return;
 
         ModConfig config = AutoReconnectMod.getConfig();
+        if (!config.enabled) {
+            return;
+        }
         if (config.autoJoinLastServer && config.lastServerAddress != null && !config.lastServerAddress.isEmpty()) {
             hasAutoJoined = true;
             AutoReconnectMod.LOGGER.info("Auto-joining last server: " + config.lastServerAddress);

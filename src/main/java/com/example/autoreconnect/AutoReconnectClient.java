@@ -24,6 +24,26 @@ public class AutoReconnectClient implements ClientModInitializer {
                                                 .sendFeedback(Text.of("§a[AutoReconnect] Ntfy topic set to: " + topic));
                                         return 1;
                                     })))
+                    .then(ClientCommandManager.literal("reconnect_phrase")
+                            .then(ClientCommandManager.argument("phrase", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        String phrase = StringArgumentType.getString(context, "phrase");
+                                        AutoReconnectMod.getConfig().ntfyReconnectPhrase = phrase;
+                                        AutoReconnectMod.getConfigHolder().save();
+                                        context.getSource().sendFeedback(
+                                                Text.of("§a[AutoReconnect] Ntfy reconnect phrase set to: " + phrase));
+                                        return 1;
+                                    })))
+                    .then(ClientCommandManager.literal("stop_phrase")
+                            .then(ClientCommandManager.argument("phrase", StringArgumentType.greedyString())
+                                    .executes(context -> {
+                                        String phrase = StringArgumentType.getString(context, "phrase");
+                                        AutoReconnectMod.getConfig().ntfyStopPhrase = phrase;
+                                        AutoReconnectMod.getConfigHolder().save();
+                                        context.getSource().sendFeedback(
+                                                Text.of("§a[AutoReconnect] Ntfy stop phrase set to: " + phrase));
+                                        return 1;
+                                    })))
                     .then(ClientCommandManager.literal("debug_disconnect")
                             .executes(context -> {
                                 MinecraftClient client = MinecraftClient.getInstance();

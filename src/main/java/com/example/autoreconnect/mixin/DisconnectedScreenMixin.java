@@ -40,60 +40,83 @@ public abstract class DisconnectedScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("RETURN"))
     private void onInit(CallbackInfo ci) {
-        this.isReconnecting = true;
         ModConfig config = AutoReconnectMod.getConfig();
-        long delayMs = config.delaySeconds * 1000L;
-        if (config.jitterEnabled) {
-            double jitter = (Math.random() * 2.0 - 1.0) * (config.jitterRange * 1000.0);
-            delayMs += (long) jitter;
+        if (!config.enabled) {
+            return;
         }
-        reconnectTime = System.currentTimeMillis() + delayMs;
 
-        // Add a button to cancel reconnection
-        cancelButton = net.minecraft.client.gui.widget.ButtonWidget
-                .builder(Text.of("Cancel Auto-Reconnect"), (button) -> {
-                    cancelReconnect();
-                })
-                .dimensions(this.width / 2 - 100, this.height - 55, 200, 20)
-                .build();
+        this.disconnectTime = System.currentTimeMillis();
 
-        this.addDrawableChild(cancelButton);
-
-        // Add a renderer for the text
-        this.addDrawable((context, mouseX, mouseY, delta) -> {
-            if (!isReconnecting)
-                return;
-            long remainingMs = reconnectTime - System.currentTimeMillis();
-            double remainingSec = Math.max(0, remainingMs / 1000.0);
-
-            if (remainingMs > 0) {
-                String timeStr = String.format("%.1f", remainingSec);
-                context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting in " + timeStr + "s..."),
-                        this.width / 2, this.height - 30, 0xFFFFFF);
-            } else {
-                context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting..."), this.width / 2,
-                        this.height - 30, 0xFFFF00);
+        if (config.autoReconnectEnabled) {
+            this.isReconnecting = true;
+            long delayMs = config.delaySeconds * 1000L;
+            if (config.jitterEnabled) {
+                double jitter = (Math.random() * 2.0 - 1.0) * (config.jitterRange * 1000.0);
+                delayMs += (long) jitter;
             }
-        });
+            reconnectTime = System.currentTimeMillis() + delayMs;
+
+            // Add a button to cancel reconnection
+            cancelButton = net.minecraft.client.gui.widget.ButtonWidget
+                    .builder(Text.of("Cancel Auto-Reconnect"), (button) -> {
+                        cancelReconnect();
+                    })
+                    .dimensions(this.width / 2 - 100, this.height - 55, 200, 20)
+                    .build();
+
+            this.addDrawableChild(cancelButton);
+
+            // Add a renderer for the text
+            this.addDrawable((context, mouseX, mouseY, delta) -> {
+                if (!isReconnecting)
+                    return;
+                long remainingMs = reconnectTime - System.currentTimeMillis();
+                double remainingSec = Math.max(0, remainingMs / 1000.0);
+
+                if (remainingMs > 0) {
+                    String timeStr = String.format("%.1f", remainingSec);
+                    context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting in " + timeStr + "s..."),
+                            this.width / 2, this.height - 30, 0xFFFFFF);
+                } else {
+                    context.drawCenteredTextWithShadow(this.textRenderer, Text.of("Reconnecting..."), this.width / 2,
+                            this.height - 30, 0xFFFF00);
+                }
+            });
+        } else {
+            this.isReconnecting = false;
+        }
 
         // Ntfy Integration
         if (AutoReconnectMod.lastServer != null) {
             String serverName = AutoReconnectMod.lastServer.name;
-            NtfyService.sendNotification(
-                    "Disconnected from " + serverName + ". Reconnecting in " + AutoReconnectMod.getConfig().delaySeconds
-                            + "s...");
+            if (config.autoReconnectEnabled) {
+                NtfyService.sendNotification(
+                        "Disconnected from " + serverName + ". Reconnecting in " + config.delaySeconds
+                                + "s... (Send '" + config.ntfyStopPhrase + "' to stop, '" + config.ntfyReconnectPhrase
+                                + "' to reconnect now)");
+            } else {
+                NtfyService.sendNotification(
+                        "Disconnected from " + serverName + ". Auto-reconnect is OFF. Send '" + config.ntfyReconnectPhrase
+                                + "' to reconnect.");
+            }
 
-            NtfyService.startStopListener(() -> {
-                // Ensure we run on the main thread
-                MinecraftClient.getInstance().execute(() -> {
-                    cancelReconnect();
-                    if (cancelButton != null) {
-                        cancelButton.setMessage(Text.of("Stopped via Ntfy"));
-                        cancelButton.active = false;
-                    }
-                    NtfyService.sendNotification("Auto-reconnect stopped by remote command.");
+            if (config.ntfyRemoteControlEnabled) {
+                NtfyService.startRemoteControlListener(() -> {
+                    MinecraftClient.getInstance().execute(() -> {
+                        cancelReconnect();
+                        if (cancelButton != null) {
+                            cancelButton.setMessage(Text.of("Auto-Reconnect Stopped (Ntfy)"));
+                            cancelButton.active = false;
+                        }
+                        NtfyService.sendNotification("Auto-reconnect stopped by remote command.");
+                    });
+                }, () -> {
+                    MinecraftClient.getInstance().execute(() -> {
+                        NtfyService.sendNotification("Reconnect command received. Reconnecting now...");
+                        reconnect();
+                    });
                 });
-            });
+            }
         }
     }
 
@@ -132,7 +155,6 @@ public abstract class DisconnectedScreenMixin extends Screen {
             cancelButton.active = false;
             cancelButton.setMessage(Text.of("Auto-Reconnect Cancelled"));
         }
-        NtfyService.stopListener();
     }
 
     @Unique

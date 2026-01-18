@@ -1,5 +1,9 @@
 package com.example.autoreconnect;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -24,6 +28,7 @@ public class NtfyService {
 
     private static Thread listenerThread;
     private static boolean listening = false;
+    private static volatile HttpURLConnection activeListenerConnection;
 
     public static void sendNotification(String message) {
         String topic = AutoReconnectMod.getConfig().ntfyTopic;
@@ -87,9 +92,13 @@ public class NtfyService {
     }
 
     public static void startStopListener(Runnable onStopCommand) {
-        if (listening)
+        startRemoteControlListener(onStopCommand, null);
+    }
+
+    public static void startRemoteControlListener(Runnable onStopCommand, Runnable onReconnectCommand) {
+        if (listening) {
             return; // Already listening
-        listening = true;
+        }
 
         String topic = AutoReconnectMod.getConfig().ntfyTopic;
         if (topic == null || topic.isEmpty()) {
@@ -97,22 +106,57 @@ public class NtfyService {
             return;
         }
 
+        String stopPhrase = normalizePhrase(AutoReconnectMod.getConfig().ntfyStopPhrase);
+        String reconnectPhrase = normalizePhrase(AutoReconnectMod.getConfig().ntfyReconnectPhrase);
+        if ((stopPhrase == null || stopPhrase.isBlank()) && (reconnectPhrase == null || reconnectPhrase.isBlank())) {
+            DebugLog.log("ntfy-listener-skip reason='no phrases configured'");
+            return;
+        }
+
+        listening = true;
+        long startTimeSeconds = System.currentTimeMillis() / 1000L;
+
         listenerThread = new Thread(() -> {
             try {
                 String baseUrl = getBaseUrl();
-                // Use classic URLConnection for continuous stream reading (SSE)
                 URL url = URI.create(baseUrl + "/" + topic + "/json").toURL();
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection(java.net.Proxy.NO_PROXY);
+                activeListenerConnection = conn;
                 conn.setReadTimeout(0); // Infinite timeout for stream
+
+                DebugLog.log("ntfy-listener-start url='" + url + "'");
 
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                     String line;
                     while (listening && (line = reader.readLine()) != null) {
-                        if (line.contains("\"message\":\"STOP\"")) {
-                            AutoReconnectMod.LOGGER.info("Received STOP command from Ntfy");
+                        JsonObject json = tryParseJsonObject(line);
+                        if (json == null) {
+                            continue;
+                        }
+
+                        String event = readString(json.get("event"));
+                        if (event != null && !event.isBlank() && !event.equals("message")) {
+                            continue;
+                        }
+
+                        Long timeSeconds = readLong(json.get("time"));
+                        if (timeSeconds != null && timeSeconds < startTimeSeconds) {
+                            continue;
+                        }
+
+                        String message = readString(json.get("message"));
+                        if (message == null) {
+                            continue;
+                        }
+
+                        if (matchesPhrase(message, stopPhrase) && onStopCommand != null) {
+                            DebugLog.log("ntfy-command received='stop'");
                             onStopCommand.run();
-                            listening = false; // Stop listening after command
-                            break;
+                        }
+
+                        if (matchesPhrase(message, reconnectPhrase) && onReconnectCommand != null) {
+                            DebugLog.log("ntfy-command received='reconnect'");
+                            onReconnectCommand.run();
                         }
                     }
                 }
@@ -120,14 +164,26 @@ public class NtfyService {
                 if (listening) {
                     DebugLog.log("ntfy-listener error='" + e.getClass().getSimpleName() + " " + e.getMessage() + "'");
                 }
+            } finally {
+                activeListenerConnection = null;
+                listening = false;
             }
         });
         listenerThread.setName("NtfyListener");
+        listenerThread.setDaemon(true);
         listenerThread.start();
     }
 
     public static void stopListener() {
         listening = false;
+        HttpURLConnection conn = activeListenerConnection;
+        if (conn != null) {
+            try {
+                conn.disconnect();
+            } catch (Exception ignored) {
+            }
+            activeListenerConnection = null;
+        }
         if (listenerThread != null) {
             listenerThread.interrupt();
             listenerThread = null;
@@ -217,5 +273,66 @@ public class NtfyService {
             return base.substring(0, base.length() - 1);
         }
         return base;
+    }
+
+    private static JsonObject tryParseJsonObject(String line) {
+        if (line == null) {
+            return null;
+        }
+        String trimmed = line.trim();
+        if (!trimmed.startsWith("{")) {
+            return null;
+        }
+        try {
+            JsonElement element = JsonParser.parseString(trimmed);
+            if (!element.isJsonObject()) {
+                return null;
+            }
+            return element.getAsJsonObject();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static String readString(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return null;
+        }
+        try {
+            return element.getAsString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static Long readLong(JsonElement element) {
+        if (element == null || element.isJsonNull()) {
+            return null;
+        }
+        try {
+            return element.getAsLong();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String normalizePhrase(String phrase) {
+        if (phrase == null) {
+            return null;
+        }
+        return phrase.trim();
+    }
+
+    private static boolean matchesPhrase(String message, String phrase) {
+        if (phrase == null || phrase.isBlank() || message == null) {
+            return false;
+        }
+        String msg = message.trim();
+        if (msg.equalsIgnoreCase(phrase)) {
+            return true;
+        }
+        return msg.regionMatches(true, 0, phrase, 0, phrase.length())
+                && msg.length() > phrase.length()
+                && Character.isWhitespace(msg.charAt(phrase.length()));
     }
 }
