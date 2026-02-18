@@ -19,6 +19,15 @@ public final class DebugLog {
     }
 
     public static synchronized void log(String message) {
+        try {
+            ModConfig config = AutoReconnectMod.getConfig();
+            if (config == null || !config.debugLogging) {
+                return;
+            }
+        } catch (Throwable ignored) {
+            return;
+        }
+
         ensureWriter();
         if (writer == null) {
             return;

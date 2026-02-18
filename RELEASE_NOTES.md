@@ -1,44 +1,55 @@
-# 🚀 Auto Reconnect v2.0 - The "Auto-Command" Update
+# Auto Reconnect v2.3 - Reliability + Discord Webhooks
 
-This massive update turns Auto Reconnect into a powerful tool for power users! You can now automate your login, navigation, and anti-AFK tasks with a beautiful new configuration GUI.
+## Changelog
 
-## 📝 Changelog
+### Smart reconnect reliability (combined in this release)
+- Added disconnect-reason filtering for non-recoverable disconnect text.
+- Added max consecutive reconnect attempt cap (`8` default).
+- Added incremental reconnect backoff (`+3s` step, capped by config).
+- Added disconnect-screen **Reconnect Anyway** manual override.
+- Added reliability attempt state tracking + reset rules.
+- Added optional notifications when reconnect is blocked by reliability.
 
-### 🤖 Auto-Command System (NEW!)
-*   **Global Join Commands**: Set commands to run EVERY time you join ANY server.
-*   **Custom Server Profiles**: Create specific command sets for different server IPs (e.g., auto-slash home on your favorite SMP).
-*   **Repeating Commands**: Loop your commands at a custom frequency—perfect for anti-AFK rotations.
-*   **Safety Guardrails**: 
-    *   **Max Runs Per Hour**: Prevents accidental spam/bans if you're stuck in a disconnect loop.
-    *   **Run Once per Session**: Ensure login commands only run the first time you join.
-    *   **Auto-Reconnect Only**: Toggle whether commands run on manual joins or just auto-reconnects.
-    *   **Precision Timing**: Adjustable delay between commands in the queue.
+### New reliability commands
+- `/autoreconnect reliability_status`
+- `/autoreconnect reliability_reset`
+- `/autoreconnect block_phrase_add <phrase>`
+- `/autoreconnect block_phrase_remove <phrase>`
+- `/autoreconnect block_phrase_list`
 
-### ⚙️ GUI & Configuration
-*   **New Settings Screen**: Completely rebuilt using **Cloth Config**. Access it via Mod Menu for a polished, user-friendly experience.
-*   **Full Localization**: All settings now have clean names and helpful tooltips.
-*   **Debug Tool**: Added `/autoreconnect debug_disconnect` to let you test your reconnection flow instantly.
+### New: Discord outbound webhooks
+- Added global Discord webhook support for outbound notifications.
+- Supported webhook hosts:
+  - `discord.com`
+  - `discordapp.com`
+  - `ptb.discord.com`
+  - `canary.discord.com`
+- Added event notifications for:
+  - disconnect
+  - reconnect triggered / reconnect success
+  - reliability blocked
+  - manual override / manual stop
+- Added per-event toggles, embed/plain format toggle, and privacy toggles.
+- Added payload truncation limits to avoid Discord 400 errors.
+- Added retry behavior with `Retry-After` and `X-RateLimit-Reset-After` handling.
+- Added per-disconnect-screen dedupe for disconnect + reliability-blocked events.
 
-### 🛡️ UX & Stability
-*   **Smart Clean-up**: Repeating commands now automatically stop as soon as you disconnect to prevent accidental cross-server spam.
-*   **Jitter Support**: Randomized reconnection delays to make your player behavior look more natural.
-*   **Success Chime**: Optional sound plays when you successfully rejoin.
+### New Discord commands
+- `/autoreconnect discord_webhook <url>`
+- `/autoreconnect discord_enabled <true|false>`
+- `/autoreconnect discord_test [message]`
+- `/autoreconnect discord_status`
+
+### Side fixes
+- Debug logging now respects the `Debug Logs` config toggle.
+- Ntfy remote control remains unchanged.
+
+### Constraints
+- Discord integration is outbound webhook POST only.
+- No bot token, no slash commands, no inbound Discord control.
 
 ---
 
-## 💎 Modrinth Description Draft
+# Auto Reconnect v2.2 - Smart Reconnect Reliability
 
-**Auto Reconnect** is the ultimate utility for staying connected to your favorite servers. Whether you're dealing with a spotty connection or a crowded queue, this mod ensures you're back in the game without lifting a finger.
-
-### 🌟 Features:
-*   **Reliable Auto-Rejoin**: Automatic reconnection with a visual countdown timer.
-*   **Advanced Auto-Commands**: Automate `/login`, `/home`, or `/wild`. Run them on join, only after reconnecting, or on a continuous loop!
-*   **Per-Server Customization**: Save unique command sets for every server you play on.
-*   **Safety First**: Built-in anti-spam limits and "Once-per-session" guards protect your account from accidental spam.
-*   **Remote Control**: Receive **Ntfy** notifications on your phone when you disconnect, and stop the bot remotely with a single ping.
-*   **Stealth Mode**: Use randomized "Jitter" delays and natural-feeling command timings.
-
-### 📦 Requirements:
-*   Fabric API
-*   Cloth Config API
-*   Mod Menu (Recommended)
+Historical entry retained for reference.

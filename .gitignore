@@ -1,28 +1,33 @@
-# Gradle files
+# Build and Gradle
 .gradle/
+.gradle-local/
 build/
 bin/
+out/
+build_log.txt
 
-# Minecraft specific
+# Minecraft runtime
 run/
 logs/
-out/
 
-# IDE files
+# IDE/editor
 .idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.vscode/
 .classpath
 .project
 .settings/
 
 # OS files
 .DS_Store
-thumbs.db
+Thumbs.db
 
-# Other
+# Local scratch files
+output.md
+
+# Misc
 *.swp
 *~
 .nbattrs

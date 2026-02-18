@@ -53,6 +53,17 @@ public class AutoCommandService {
 
         boolean isAutoReconnect = AutoReconnectMod.wasAutoReconnect;
         AutoReconnectMod.wasAutoReconnect = false; // Reset flag
+        if (!isAutoReconnect) {
+            ReconnectStateService.resetAttempts("manual_join");
+        } else {
+            ReconnectStateService.scheduleResetAfterStableConnection(serverKey, 60);
+            DiscordWebhookService.sendEvent(
+                    DiscordEventType.RECONNECT_SUCCESS,
+                    "Reconnected successfully.",
+                    server.name,
+                    server.address,
+                    "Join confirmed after auto-reconnect.");
+        }
 
         if (config.playSoundOnJoin && isAutoReconnect) {
             client.execute(() -> {
