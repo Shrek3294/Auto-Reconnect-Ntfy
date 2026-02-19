@@ -1,0 +1,62 @@
+plugins {
+    id 'net.neoforged.moddev' version '2.0.140'
+    id 'maven-publish'
+}
+
+base {
+    archivesName = "${project.archives_base_name}-neoforge"
+}
+
+sourceSets {
+    main {
+        java.srcDir(project(':common').file('src/main/java'))
+        resources.srcDir(project(':common').file('src/main/resources'))
+    }
+}
+
+neoForge {
+    version = project.neoforge_version
+
+    runs {
+        client {
+            client()
+        }
+    }
+
+    mods {
+        autoreconnect {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    implementation "me.shedaniel.cloth:cloth-config-neoforge:${project.cloth_config_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mod_id", project.archives_base_name
+    inputs.property "minecraft_version", project.minecraft_version
+    inputs.property "neoforge_version", project.neoforge_version
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand(
+                version: project.version,
+                mod_id: project.archives_base_name,
+                minecraft_version: project.minecraft_version,
+                neoforge_version: project.neoforge_version
+        )
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}

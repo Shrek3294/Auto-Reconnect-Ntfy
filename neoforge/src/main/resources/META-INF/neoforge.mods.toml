@@ -1,0 +1,34 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "CC0-1.0"
+
+[[mixins]]
+config = "autoreconnect.neoforge.mixins.json"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${version}"
+displayName = "Auto Reconnect"
+description = "Automatically reconnects to the server after disconnection."
+authors = "Me"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "[${minecraft_version}]"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.${mod_id}]]
+modId = "cloth_config"
+type = "required"
+versionRange = "[15.0.140,)"
+ordering = "NONE"
+side = "CLIENT"

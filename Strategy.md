@@ -314,6 +314,22 @@ Example presets:
 **Constraint retained:**
 - Outbound webhook POST only (no bot token, no slash commands, no inbound Discord control)
 
+**Next Phase: Discord Webhooks v2 (Expansion Track)**
+
+**Goal:** Turn outbound webhook support from MVP into production-grade alerting.
+
+**Priority scope:**
+- Expand event coverage: disconnect reason categories, reconnect success/failure reasons, server switch events, and latency/health alerts
+- Harden delivery pipeline: persisted outbound queue, retries with exponential backoff + jitter, proper 429 Retry-After handling, and duplicate suppression keys
+- Add routing/filtering: per-server and per-event filters plus multiple webhook targets (for example personal + ops channels)
+- Improve operator UX: template variables, payload preview/test, delivery log, and last-error visibility in GUI/commands
+- Keep security boundary unchanged: outbound-only webhook model (no inbound Discord control)
+
+**Suggested rollout:**
+- Sprint 1: Coverage expansion + queue persistence
+- Sprint 2: Retry/ratelimit hardening + dedupe
+- Sprint 3: Routing/filtering + templating + delivery diagnostics
+
 ---
 
 #### 7. Statistics Dashboard
@@ -487,15 +503,17 @@ An outdated page creates false abandonment signals.
 
 ### Top 5 Features to Build Next (Revised)
 
-**Note:** Smart Reconnect Reliability and Discord Outbound Webhooks are now shipped in v2.3 and removed from upcoming priorities.
+**Note:** Smart Reconnect Reliability and Discord Outbound Webhooks MVP are shipped in v2.3. The next webhook priority is the v2 expansion track.
 
 | Rank | Feature | Effort | Impact | Timeline |
 |------|---------|--------|--------|----------|
 | 1 | **Setup Wizard + Test Notification** | Medium | 🔥🔥🔥 VERY HIGH | 1–2 weeks |
 | 2 | **NeoForge Support** | Medium | 🔥🔥🔥 HIGH | 2–3 weeks |
 | 3 | **Queue / AFK Presets** | Medium | 🔥🔥🔥 HIGH | 1–2 weeks |
-| 4 | **Video & GIF Showcase** | Low | 🔥🔥🔥 HIGH | 3–5 days |
-| 5 | **CurseForge Sync** | Low | 🔥🔥 MEDIUM | 2–3 days |
+| 4 | **Discord Webhooks v2 (Coverage + Reliability + Routing)** | Medium | 🔥🔥🔥 HIGH | 2–3 weeks |
+| 5 | **Video & GIF Showcase** | Low | 🔥🔥🔥 HIGH | 3–5 days |
+
+**Fast-follow:** CurseForge Sync (Low effort, 2–3 days, medium impact).
 
 ---
 

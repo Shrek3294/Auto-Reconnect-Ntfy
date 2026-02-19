@@ -1,0 +1,69 @@
+package com.example.autoreconnect;
+
+import net.minecraft.client.Minecraft;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public final class DebugLog {
+    private static final DateTimeFormatter TS_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static BufferedWriter writer;
+
+    private DebugLog() {
+    }
+
+    public static synchronized void log(String message) {
+        try {
+            ModConfig config = AutoReconnectMod.getConfig();
+            if (config == null || !config.debugLogging) {
+                return;
+            }
+        } catch (Throwable ignored) {
+            return;
+        }
+
+        ensureWriter();
+        if (writer == null) {
+            return;
+        }
+        try {
+            String ts = LocalDateTime.now().format(TS_FORMAT);
+            writer.write(ts + " " + message);
+            writer.newLine();
+            writer.flush();
+        } catch (IOException e) {
+            AutoReconnectMod.LOGGER.warn("AutoReconnect debug log write failed", e);
+        }
+    }
+
+    private static void ensureWriter() {
+        if (writer != null) {
+            return;
+        }
+        Path baseDir;
+        Minecraft client = Minecraft.getInstance();
+        if (client != null && client.gameDirectory != null) {
+            baseDir = client.gameDirectory.toPath();
+        } else {
+            baseDir = Path.of(".");
+        }
+        Path logsDir = baseDir.resolve("logs");
+        Path logPath = logsDir.resolve("autoreconnect-debug.log");
+        try {
+            Files.createDirectories(logsDir);
+            writer = Files.newBufferedWriter(
+                    logPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            AutoReconnectMod.LOGGER.warn("AutoReconnect debug log init failed: {}", logPath, e);
+            writer = null;
+        }
+    }
+}

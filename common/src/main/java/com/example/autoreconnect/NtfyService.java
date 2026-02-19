@@ -122,6 +122,7 @@ public class NtfyService {
                 URL url = URI.create(baseUrl + "/" + topic + "/json").toURL();
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection(java.net.Proxy.NO_PROXY);
                 activeListenerConnection = conn;
+                conn.setConnectTimeout(5000);
                 conn.setReadTimeout(0); // Infinite timeout for stream
 
                 DebugLog.log("ntfy-listener-start url='" + url + "'");
@@ -177,16 +178,21 @@ public class NtfyService {
     public static void stopListener() {
         listening = false;
         HttpURLConnection conn = activeListenerConnection;
-        if (conn != null) {
-            try {
-                conn.disconnect();
-            } catch (Exception ignored) {
-            }
-            activeListenerConnection = null;
-        }
+        activeListenerConnection = null;
         if (listenerThread != null) {
             listenerThread.interrupt();
             listenerThread = null;
+        }
+        if (conn != null) {
+            Thread closer = new Thread(() -> {
+                try {
+                    conn.disconnect();
+                } catch (Exception ignored) {
+                }
+            });
+            closer.setName("NtfyListenerCloser");
+            closer.setDaemon(true);
+            closer.start();
         }
     }
 
